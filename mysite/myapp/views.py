@@ -1,27 +1,14 @@
-# <!-- Copyright [2024] [Sankalp kumar]
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#     http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License. -->
-
+import pandas as pd
 from django.shortcuts import render
 import requests
 from bs4 import BeautifulSoup
 from .models import Link
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 
 def scrape(request):
     if request.method == "POST":
         site = request.POST.get('site', '')
-        element_type = request.POST.get('element_type', 'a')  # Get the selected element type
+        element_type = request.POST.get('element_type', 'a')
         page = requests.get(site)
         soup = BeautifulSoup(page.text, 'html.parser')
         
@@ -63,3 +50,20 @@ def scrape(request):
 def clear(request):
     Link.objects.all().delete()
     return render(request, 'myapp/result1.html')
+
+def export_csv(request):
+    links = Link.objects.all().values('address', 'name')
+    df = pd.DataFrame(list(links))  # Convert queryset to DataFrame
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="scraped_data.csv"'
+    df.to_csv(path_or_buf=response, index=False)
+    return response
+
+def export_excel(request):
+    links = Link.objects.all().values('address', 'name')
+    df = pd.DataFrame(list(links))  # Convert queryset to DataFrame
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="scraped_data.xlsx"'
+    with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Scraped Data')
+    return response

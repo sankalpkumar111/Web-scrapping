@@ -22,4 +22,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.scrape,name="scrape"),
     path('delete/',views.clear,name="clear"),
+     path('export_csv/', views.export_csv, name='export_csv'),
+    path('export_excel/', views.export_excel, name='export_excel'),
+    
 ]
+
